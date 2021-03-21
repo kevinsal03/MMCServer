@@ -1,8 +1,8 @@
 <project>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tuinity</groupId>
-    <artifactId>tuinity-parent</artifactId>
+    <groupId>me.kevsal.mmcserver</groupId>
+    <artifactId>mmcserver-parent</artifactId>
     <version>dev-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Tuinity (Parent)</name>
@@ -23,8 +23,8 @@
         <finalName>${project.artifactId}</finalName>
     </build>
     <modules>
-        <module>Tuinity-API</module>
-        <module>Tuinity-Server</module>
+        <module>MMCServer-API</module>
+        <module>MMCServer-Server</module>
         <module>Paper${file.separator}Paper-MojangAPI</module> <!-- We don't plan on patching this, so this hack is good enough. -->
     </modules>
 </project>

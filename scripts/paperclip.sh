@@ -6,7 +6,7 @@
 (
 set -e
 basedir="$(cd "$1" && pwd -P)"
-workdir="$basedir/Tuinity/work"
+workdir="$basedir/Tuinity/Paper/work"
 mcver=$(cat "$workdir/BuildData/info.json" | grep minecraftVersion | cut -d '"' -f 4)
 paperjar="$basedir/MMCServer-Server/target/mmcserver-$mcver.jar"
 vanillajar="$workdir/Minecraft/$mcver/$mcver.jar"

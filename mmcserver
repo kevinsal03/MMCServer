@@ -55,7 +55,7 @@ case "$1" in
         basedir
         cd "$basedir"
         if [ "$2" != "fast" ]; then
-           rm -rf "$basedir/Tuinity/work/"
+           rm -rf "$basedir/Tuinity/Paper/work/"
            scripts/upstream.sh
         fi
         ./scripts/apply.sh "$basedir"
@@ -63,7 +63,7 @@ case "$1" in
         mvn -N install
         cd ${FORK_NAME}-API && mvn -e clean install
         cd ../Tuinity/Paper/Paper-MojangAPI && mvn -e clean install
-        cd ../../${FORK_NAME}-Server && mvn -e clean install
+        cd ../../../${FORK_NAME}-Server && mvn -e clean install
         cd "$basedir"
         ./scripts/paperclip.sh
     )

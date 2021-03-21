@@ -12,8 +12,8 @@ done
 cd $basedir
 tuinityVer=$(cat current-tuinity)
 
-minecraftversion=$(cat $basedir/Tuinity/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
-decompile="Tuinity/work/Minecraft/$minecraftversion/spigot"
+minecraftversion=$(cat $basedir/Tuinity/Paper/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
+decompile="Tuinity/Paper/work/Minecraft/$minecraftversion/spigot"
 
 mkdir -p mc-dev/src/net/minecraft
 

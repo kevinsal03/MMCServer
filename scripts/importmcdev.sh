@@ -8,8 +8,8 @@ while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symli
 done
 . $(dirname $SOURCE)/init.sh
 
-workdir="$basedir"/Tuinity/work
-minecraftversion=$(cat "$basedir"/Tuinity/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
+workdir="$basedir"/Tuinity/Paper/work
+minecraftversion=$(cat "$basedir"/Tuinity/Paper/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
 decompiledir=$workdir/Minecraft/$minecraftversion/spigot
 
 nms="net/minecraft"

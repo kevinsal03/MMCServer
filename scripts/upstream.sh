@@ -30,7 +30,7 @@ mcVer=$(mvn -o org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpre
 basedir
 . "$basedir"/scripts/importmcdev.sh
 
-minecraftversion=$(cat "$basedir"/Tuinity/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
+minecraftversion=$(cat "$basedir"/Tuinity/Paper/work/BuildData/info.json | grep minecraftVersion | cut -d '"' -f 4)
 version=$(echo -e "Tuinity: $tuinityVer\nmc-dev:$importedmcdev")
 tag="${minecraftversion}-${mcVer}-$(echo -e $version | shasum | awk '{print $1}')"
 echo "$tag" > "$basedir"/current-tuinity
