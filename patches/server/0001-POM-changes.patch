@@ -1,0 +1,64 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kevinsal03 <kevinsal03@users.noreply.github.com>
+Date: Sun, 21 Mar 2021 18:25:08 -0400
+Subject: [PATCH] POM changes
+
+
+diff --git a/pom.xml b/pom.xml
+index dad9981b1cd1ca8b27a45972188fd2b92f5146e7..096b183144b4722b0de6a0846906eec747847abb 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -1,11 +1,11 @@
+ <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+     <modelVersion>4.0.0</modelVersion>
+-    <artifactId>tuinity</artifactId>
++    <artifactId>mmcserver</artifactId>
+     <packaging>jar</packaging>
+     <version>1.16.5-R0.1-SNAPSHOT</version>
+-    <name>Tuinity-Server</name>
+-    <url>https://github.com/Spottedleaf/Tuinity</url>
++    <name>MMCServer-Server</name>
++    <url>https://github.com/Kevinsal03/MMCServer</url>
+ 
+     <properties>
+         <!-- <skipTests>true</skipTests> Paper - This [was] not going to end well -->
+@@ -19,16 +19,16 @@
+     </properties>
+ 
+     <parent>
+-        <groupId>com.tuinity</groupId>
+-        <artifactId>tuinity-parent</artifactId>
++        <groupId>me.kevsal.mmcserver</groupId>
++        <artifactId>mmcserver-parent</artifactId>
+         <version>dev-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+     <dependencies>
+         <dependency>
+-            <groupId>com.tuinity</groupId>
+-            <artifactId>tuinity-api</artifactId>
++            <groupId>me.kevsal.mmcserver</groupId>
++            <artifactId>mmcserver-api</artifactId>
+             <version>${project.version}</version>
+             <scope>compile</scope>
+         </dependency>
+@@ -163,7 +163,7 @@
+ 
+     <!-- This builds a completely 'ready to start' jar with all dependencies inside -->
+     <build>
+-        <finalName>tuinity-${minecraft.version}</finalName>
++        <finalName>mmcserver-${minecraft.version}</finalName>
+         <defaultGoal>install</defaultGoal> <!-- Paper -->
+         <plugins>
+             <plugin>
+@@ -171,7 +171,7 @@
+                 <artifactId>gitdescribe-maven-plugin</artifactId>
+                 <version>1.3</version>
+                 <configuration>
+-                    <outputPrefix>git-Tuinity-</outputPrefix> <!-- Tuinity -->
++                    <outputPrefix>git-MMCServer-</outputPrefix> <!-- MMCServer > Tuinity -->
+                     <scmDirectory>..</scmDirectory>
+                 </configuration>
+                 <executions>

@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kevinsal03 <kevinsal03@users.noreply.github.com>
+Date: Sun, 21 Mar 2021 18:12:33 -0400
+Subject: [PATCH] MMCServer POM changes
+
+
+diff --git a/pom.xml b/pom.xml
+index b3a7ea7bc50b98071bfc78611426507d419ed8fa..d68ce67adec6263f0ef331fdda32e8c251b39f52 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -3,18 +3,18 @@
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+     <modelVersion>4.0.0</modelVersion>
+     <parent>
+-        <groupId>com.tuinity</groupId>
+-        <artifactId>tuinity-parent</artifactId>
++        <groupId>me.kevsal.mmcserver</groupId>
++        <artifactId>mmcserver-parent</artifactId>
+         <version>dev-SNAPSHOT</version>
+         <relativePath>../pom.xml</relativePath>
+     </parent>
+ 
+-    <artifactId>tuinity-api</artifactId>
++    <artifactId>mmcserver-api</artifactId>
+     <version>1.16.5-R0.1-SNAPSHOT</version>
+     <packaging>jar</packaging>
+ 
+-    <name>Tuinity-API</name>
+-    <url>https://github.com/Spottedleaf/Tuinity</url>
++    <name>MMCServer-API</name>
++    <url>https://github.com/kevinsal03/MMCServer</url>
+     <description>An enhanced plugin API for Minecraft servers.</description>
+ 
+     <properties>
