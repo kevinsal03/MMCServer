@@ -5,7 +5,7 @@ Subject: [PATCH] MMCServer POM changes
 
 
 diff --git a/pom.xml b/pom.xml
-index b3a7ea7bc50b98071bfc78611426507d419ed8fa..d68ce67adec6263f0ef331fdda32e8c251b39f52 100644
+index 6c200882954adc4831307f3d6dfa3202571fb30b..4cbd140dec3d854bc2e8f167dd48b565d95d4cba 100644
 --- a/pom.xml
 +++ b/pom.xml
 @@ -3,18 +3,18 @@

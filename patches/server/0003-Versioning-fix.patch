@@ -1,0 +1,19 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kevinsal03 <kevinsal03@users.noreply.github.com>
+Date: Sun, 21 Mar 2021 19:56:52 -0400
+Subject: [PATCH] Versioning fix
+
+
+diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+index 001b1e5197eaa51bfff9031aa6c69876c9a47960..f3f30cc505d688eabdff86170a440e3346a552d1 100644
+--- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
++++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
+@@ -11,7 +11,7 @@ public final class Versioning {
+     public static String getBukkitVersion() {
+         String result = "Unknown-Version";
+ 
+-        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/com.tuinity/tuinity-api/pom.properties"); // Tuinity
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/me.kevsal.mmcserver/mmcserver-api/pom.properties"); // MMCServer
+         Properties properties = new Properties();
+ 
+         if (stream != null) {
