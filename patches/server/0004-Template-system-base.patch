@@ -1,0 +1,147 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Kevinsal03 <kevinsal03@users.noreply.github.com>
+Date: Mon, 22 Mar 2021 10:53:56 -0400
+Subject: [PATCH] Template system base
+
+
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..14fe6e41dd6c5bbc8ea552d8a93d1f0219186212
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java
+@@ -0,0 +1,43 @@
++package me.kevsal.minecraft.mmcserver.templates;
++
++import me.kevsal.minecraft.mmcserver.templates.exceptions.InvalidRepositoryException;
++
++import java.net.MalformedURLException;
++import java.net.URL;
++
++public class MMCTemplateSystem {
++
++    private static MMCTemplateSystem instance;
++    private final URL REPO_URL;
++    private final String TEMPLATE_ID;
++
++    public MMCTemplateSystem(URL repoURL, String templateId) {
++        instance = this;
++        REPO_URL = repoURL;
++        TEMPLATE_ID = templateId;
++        System.out.println("MMCTemplateSystem is initializing.");
++        System.out.println("Using Repo: " + REPO_URL);
++        System.out.println("Using Template with ID: " + TEMPLATE_ID);
++
++        // Load the template
++        loadTemplate();
++    }
++
++    public static MMCTemplateSystem init(String repoURL, String templateId) throws RuntimeException {
++        try {
++            URL validatedRepoURL = new URL(repoURL);
++            instance = new MMCTemplateSystem(validatedRepoURL, templateId);
++        } catch (MalformedURLException e) {
++            throw new InvalidRepositoryException("MalformedURLException while reading converting String URL to URL");
++        }
++        return instance;
++    }
++
++    public void loadTemplate() {
++        System.out.println("Template loading is not yet working.");
++    }
++
++    public static MMCTemplateSystem getInstance() {
++        return instance;
++    }
++}
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/exceptions/InvalidRepositoryException.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/exceptions/InvalidRepositoryException.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..de3f0ec85edb273dfaed6812365ef6471f184932
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/exceptions/InvalidRepositoryException.java
+@@ -0,0 +1,11 @@
++package me.kevsal.minecraft.mmcserver.templates.exceptions;
++
++
++public class InvalidRepositoryException extends RuntimeException {
++    public InvalidRepositoryException() {
++        super("Unable to get the repository from the provided URL");
++    }
++    public InvalidRepositoryException(String message) {
++        super("Invalid repository: " + message);
++    }
++}
+diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
+index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96ea20aa8fd 100644
+--- a/src/main/java/org/bukkit/craftbukkit/Main.java
++++ b/src/main/java/org/bukkit/craftbukkit/Main.java
+@@ -12,6 +12,7 @@ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ import joptsimple.OptionParser;
+ import joptsimple.OptionSet;
++import me.kevsal.minecraft.mmcserver.templates.MMCTemplateSystem;
+ import net.minecraft.util.ExceptionSuppressor;
+ import net.minecraft.world.level.lighting.LightEngineLayerEventListener;
+ import net.minecrell.terminalconsole.TerminalConsoleAppender; // Paper
+@@ -125,6 +126,9 @@ public class Main {
+ 
+                 acceptsAll(asList("demo"), "Demo mode");
+ 
++                acceptsAll(asList("use-mmc-template"), "use the template system"); // MMCServer - should init the template system?
++                acceptsAll(asList("mmc-template-except-not-fatal", "mmctexnf"), "disables template system fatal exceptions"); // Disable fatal exceptions
++
+                 // Spigot Start
+                 acceptsAll(asList("S", "spigot-settings"), "File for spigot settings")
+                         .withRequiredArg()
+@@ -155,6 +159,24 @@ public class Main {
+                         .defaultsTo("Unknown Server")
+                         .describedAs("Name");
+                 // Paper end
++
++
++
++                // MMCServer start - add template server location
++                acceptsAll(asList("mmc-repo", "mmcr"), "MMC template")
++                        .withRequiredArg()
++                        .ofType(String.class)
++                        .defaultsTo("https://static.kevinsal03.com/MMCExampleRepo/repo")
++                        .describedAs("URL of an MMC repo");
++                // MMCServer end
++
++                //MMCServer start - add template server ID
++                acceptsAll(asList("mmc-template-id", "mmctid"), "template id for MMC server repo")
++                        .withRequiredArg()
++                        .ofType(String.class)
++                        .defaultsTo("NONE")
++                        .describedAs("Unique ID");
++                // MMCServer end
+             }
+         };
+ 
+@@ -281,6 +303,27 @@ public class Main {
+                 }
+                 // Paper end
+                 System.setProperty( "library.jansi.version", "Paper" ); // Paper - set meaningless jansi version to prevent git builds from crashing on Windows
++
++                // MMCServer start - Add a new launch option to handle the auto setup.
++
++                if (options.has("use-mmc-template")) {
++                    System.out.println("Loading MMC template system, please wait...");
++                    try {
++                        MMCTemplateSystem.init(((String) options.valueOf("mmc-repo")), ((String) options.valueOf("mmc-template-id")));
++                    } catch (Exception e) {
++                        e.printStackTrace();
++                        if (!options.has("mmc-template-except-not-fatal")) {
++                            System.err.println("An exception occurred while starting the template system... shutting down.");
++                            return;
++                        } else {
++                            System.err.println("An exception occurred while starting the template system... continuing anyway.");
++                        }
++                    }
++                }
++
++                // MMCServer end
++
++
+                 System.out.println("Loading libraries, please wait...");
+                 net.minecraft.server.Main.main(options);
+             } catch (Throwable t) {

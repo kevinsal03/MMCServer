@@ -25,6 +25,6 @@
     <modules>
         <module>MMCServer-API</module>
         <module>MMCServer-Server</module>
-        <module>Paper${file.separator}Paper-MojangAPI</module> <!-- We don't plan on patching this, so this hack is good enough. -->
+        <module>Tuinity/Paper${file.separator}Paper-MojangAPI</module> <!-- We don't plan on patching this, so this hack is good enough. -->
     </modules>
 </project>
