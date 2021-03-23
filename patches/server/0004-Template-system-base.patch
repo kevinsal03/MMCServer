@@ -4,15 +4,123 @@ Date: Mon, 22 Mar 2021 10:53:56 -0400
 Subject: [PATCH] Template system base
 
 
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9bde37b6d3
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
+@@ -0,0 +1,101 @@
++package me.kevsal.minecraft.mmcserver.templates;
++
++import org.json.simple.JSONArray;
++import org.json.simple.JSONObject;
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.net.MalformedURLException;
++import java.net.URL;
++import java.nio.channels.Channels;
++import java.nio.channels.ReadableByteChannel;
++import java.util.HashMap;
++import java.util.Map;
++
++public class MMCTemplate {
++
++    private final String TEMPLATE_NAME;
++    private final String SUPPORTED_VERSION;
++    private final HashMap<String, HashMap<String, String>> PROVIDED_FILES;
++    private final HashMap<String, HashMap<String, String>> PROVIDED_PLUGIN_PACKS;
++    private final HashMap<String, HashMap<String, String>> PROVIDED_WORLD_PACKS;
++    private final HashMap<String, HashMap<String, String>> REMOTE_PLUGIN_JARS;
++    private final HashMap<String, HashMap<String, String>> REMOTE_WORLD_PACKS;
++
++    public MMCTemplate(JSONObject templateInfo) {
++        TEMPLATE_NAME = (String) templateInfo.get("template_name");
++        SUPPORTED_VERSION = (String) templateInfo.get("supported_version");
++        PROVIDED_FILES = providedFileParser((JSONArray) templateInfo.get("provided_files"));
++        PROVIDED_PLUGIN_PACKS = pluginPackParser((JSONArray) templateInfo.get("provided_plugin_packs"));
++        PROVIDED_WORLD_PACKS = null;
++        REMOTE_PLUGIN_JARS = null;
++        REMOTE_WORLD_PACKS = null;
++    }
++
++    public void printData() {
++        System.out.println("TEMPLATE_NAME: " + TEMPLATE_NAME);
++        System.out.println("SUPPORTED_VERSION: " + SUPPORTED_VERSION);
++        System.out.println("PROVIDED_FILES: " + PROVIDED_FILES);
++        System.out.println("PROVIDED_PLUGIN_PACKS: " + PROVIDED_PLUGIN_PACKS);
++        System.out.println("PROVIDED_WORLD_PACKS: " + PROVIDED_WORLD_PACKS);
++        System.out.println("REMOTE_PLUGIN_JARS: " + REMOTE_PLUGIN_JARS);
++        System.out.println("REMOTE_WORLD_PACKS: " + REMOTE_WORLD_PACKS);
++    }
++
++    public boolean installTemplate() {
++        InstallTasks.installProvidedFiles(PROVIDED_FILES);
++        return false;
++    }
++
++    private HashMap<String, HashMap<String, String>> providedFileParser(JSONArray jsonArray) {
++        HashMap<String, HashMap<String, String>> out = new HashMap<>();
++
++        for (Object providedFile : jsonArray) {
++            HashMap<String, String> objectData = new HashMap<>();
++            String key = ((String) ((JSONObject) providedFile).get("file_name"));
++            objectData.put("origin_path", ((String) ((JSONObject) providedFile).get("origin_path")));
++            objectData.put("output_path", ((String) ((JSONObject) providedFile).get("output_path")));
++            out.put(key, objectData);
++        }
++
++        return out;
++    }
++
++    private HashMap<String, HashMap<String, String>> pluginPackParser(JSONArray jsonArray) {
++        HashMap<String, HashMap<String, String>> out = new HashMap<>();
++
++        for (Object providedFile : jsonArray) {
++            HashMap<String, String> objectData = new HashMap<>();
++            String key = ((String) ((JSONObject) providedFile).get("pack_name"));
++            objectData.put("origin_path", ((String) ((JSONObject) providedFile).get("origin_path")));
++            objectData.put("output_path", ((String) ((JSONObject) providedFile).get("output_path")));
++            out.put(key, objectData);
++        }
++
++        return out;
++    }
++
++    private static class InstallTasks {
++        public static void installProvidedFiles(HashMap<String, HashMap<String, String>> providedFiles) {
++            for (Map.Entry<String, HashMap<String, String>> entry : providedFiles.entrySet()) {
++                String key = entry.getKey();
++                HashMap<String, String> objectData = entry.getValue();
++                try {
++                    URL origin = new URL(MMCTemplateSystem.getInstance().getTemplateURL() + "/provided_files/" + objectData.get("origin_path"));
++                    System.out.println("Downloading " + key + ", from: " + origin + ", to: " + objectData.get("output_path"));
++                    downloadFile(origin, objectData.get("output_path"));
++                } catch (Exception ignored) {} // ill deal with this later
++            }
++        }
++
++
++        public static void downloadFile(URL origin, String path) throws IOException {
++            File file = new File(path);
++            file.createNewFile();
++            ReadableByteChannel rbc = Channels.newChannel(origin.openStream());
++            FileOutputStream fos = new FileOutputStream(file);
++            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
++        }
++    }
++}
 diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..14fe6e41dd6c5bbc8ea552d8a93d1f0219186212
+index 0000000000000000000000000000000000000000..e78f84e6a06b328275620153fb4d680673f3302f
 --- /dev/null
 +++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplateSystem.java
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,64 @@
 +package me.kevsal.minecraft.mmcserver.templates;
 +
 +import me.kevsal.minecraft.mmcserver.templates.exceptions.InvalidRepositoryException;
++import me.kevsal.minecraft.mmcserver.templates.util.TemplateInstaller;
 +
 +import java.net.MalformedURLException;
 +import java.net.URL;
@@ -22,6 +130,7 @@ index 0000000000000000000000000000000000000000..14fe6e41dd6c5bbc8ea552d8a93d1f02
 +    private static MMCTemplateSystem instance;
 +    private final URL REPO_URL;
 +    private final String TEMPLATE_ID;
++    private URL templateURL;
 +
 +    public MMCTemplateSystem(URL repoURL, String templateId) {
 +        instance = this;
@@ -32,7 +141,7 @@ index 0000000000000000000000000000000000000000..14fe6e41dd6c5bbc8ea552d8a93d1f02
 +        System.out.println("Using Template with ID: " + TEMPLATE_ID);
 +
 +        // Load the template
-+        loadTemplate();
++        installTemplate();
 +    }
 +
 +    public static MMCTemplateSystem init(String repoURL, String templateId) throws RuntimeException {
@@ -45,8 +154,27 @@ index 0000000000000000000000000000000000000000..14fe6e41dd6c5bbc8ea552d8a93d1f02
 +        return instance;
 +    }
 +
-+    public void loadTemplate() {
-+        System.out.println("Template loading is not yet working.");
++    private void installTemplate() {
++        try {
++            templateURL = new URL(REPO_URL.toString() + "/templates/" + TEMPLATE_ID);
++            if (TemplateInstaller.installTemplateFromRepo(templateURL)) {
++                System.out.println("Template installed successfully");
++            } else {
++                throw new RuntimeException("Unable to install template");
++            }
++
++        } catch (Exception e) {
++            e.printStackTrace();
++            System.err.println("Error installing template");
++        }
++    }
++
++    public URL getREPO_URL() {
++        return REPO_URL;
++    }
++
++    public URL getTemplateURL() {
++        return templateURL;
 +    }
 +
 +    public static MMCTemplateSystem getInstance() {
@@ -70,11 +198,105 @@ index 0000000000000000000000000000000000000000..de3f0ec85edb273dfaed6812365ef647
 +        super("Invalid repository: " + message);
 +    }
 +}
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/TemplateInstaller.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/TemplateInstaller.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..2d66ad874fb1a9854a240af7dfb9aed49c82ec4d
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/TemplateInstaller.java
+@@ -0,0 +1,79 @@
++package me.kevsal.minecraft.mmcserver.templates.util;
++
++import me.kevsal.minecraft.mmcserver.templates.MMCTemplate;
++import org.json.simple.JSONObject;
++import org.json.simple.parser.JSONParser;
++
++import java.io.*;
++import java.net.URL;
++import java.nio.channels.Channels;
++import java.nio.channels.ReadableByteChannel;
++
++public class TemplateInstaller {
++
++    private static boolean failed = false;
++
++    public static boolean installTemplateFromRepo(URL templateURL) {
++
++        monitorFail(createDirectories());
++
++        monitorFail(downloadTemplateInfo(templateURL));
++
++        monitorFail(parseTemplateInfo());
++
++        return !failed;
++    }
++
++    private static boolean downloadTemplateInfo(URL templateURL) {
++        try {
++            URL templateInfoURL = new URL(templateURL.toString() + "/template-info.json");
++            ReadableByteChannel rbc = Channels.newChannel(templateInfoURL.openStream());
++            File templateInfoFile = new File("./mmc/work/template-info.json");
++            templateInfoFile.createNewFile();
++            FileOutputStream fos = new FileOutputStream(templateInfoFile);
++            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
++        } catch (Exception e) {
++            e.printStackTrace();
++            System.err.println("Failed to download template-info.yml");
++            return false;
++        }
++        return true;
++    }
++
++    private static boolean parseTemplateInfo() {
++        try {
++            JSONParser jsonParser = new JSONParser();
++            JSONObject templateInfo = (JSONObject) jsonParser.parse(new FileReader("./mmc/work/template-info.json"));
++            MMCTemplate template = new MMCTemplate(templateInfo);
++            template.printData();
++            template.installTemplate();
++
++        } catch (Exception e) {
++            e.printStackTrace();
++            System.err.println("Error parsing template-info.json");
++            return false;
++        }
++        return true;
++    }
++
++    private static boolean createDirectories() {
++        String[] directories = { "./mmc", "./mmc/work", "./plugins" };
++        try {
++            for (String directoryPath : directories) {
++                File directory = new File(directoryPath);
++                directory.mkdirs();
++            }
++        } catch (Exception e) {
++            e.printStackTrace();
++            System.err.println("Failed to create directories");
++            return false;
++        }
++        return true;
++    }
++
++    private static void monitorFail(boolean success) {
++        if (!failed) {
++            failed = !success;
++        }
++    }
++}
+\ No newline at end of file
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96ea20aa8fd 100644
+index 2774abda3dd1390ae904bf2b177bdd0f11968f40..ff730d02770d07b6a3d271f554100bc0eca24de4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -12,6 +12,7 @@ import java.util.logging.Level;
+@@ -2,6 +2,7 @@ package org.bukkit.craftbukkit;
+ 
+ import java.io.File;
+ import java.io.IOException;
++import java.net.URL;
+ import java.text.SimpleDateFormat;
+ import java.util.Arrays;
+ import java.util.Calendar;
+@@ -12,9 +13,11 @@ import java.util.logging.Level;
  import java.util.logging.Logger;
  import joptsimple.OptionParser;
  import joptsimple.OptionSet;
@@ -82,7 +304,11 @@ index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96e
  import net.minecraft.util.ExceptionSuppressor;
  import net.minecraft.world.level.lighting.LightEngineLayerEventListener;
  import net.minecrell.terminalconsole.TerminalConsoleAppender; // Paper
-@@ -125,6 +126,9 @@ public class Main {
++import org.bukkit.craftbukkit.util.Versioning;
+ 
+ public class Main {
+     public static boolean useJline = true;
+@@ -125,6 +128,9 @@ public class Main {
  
                  acceptsAll(asList("demo"), "Demo mode");
  
@@ -92,7 +318,7 @@ index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96e
                  // Spigot Start
                  acceptsAll(asList("S", "spigot-settings"), "File for spigot settings")
                          .withRequiredArg()
-@@ -155,6 +159,24 @@ public class Main {
+@@ -155,6 +161,24 @@ public class Main {
                          .defaultsTo("Unknown Server")
                          .describedAs("Name");
                  // Paper end
@@ -117,7 +343,7 @@ index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96e
              }
          };
  
-@@ -281,6 +303,27 @@ public class Main {
+@@ -281,6 +305,42 @@ public class Main {
                  }
                  // Paper end
                  System.setProperty( "library.jansi.version", "Paper" ); // Paper - set meaningless jansi version to prevent git builds from crashing on Windows
@@ -126,7 +352,22 @@ index 2774abda3dd1390ae904bf2b177bdd0f11968f40..2e5db005c16711e553857566d3cee96e
 +
 +                if (options.has("use-mmc-template")) {
 +                    System.out.println("Loading MMC template system, please wait...");
++
++                    if (javaVersion < 55.0) {
++                        System.err.println("*** SERVER START DELAYED ***");
++                        System.err.println("WARNING: Unsupported Java detected (" + javaVersion + ").");
++                        System.err.println("Java versions below Java 11 (55) are unsupported and may (will) cause issues.");
++                        System.err.println("Please consider updating!");
++                        System.err.println("*** Server will start in 20 seconds ***");
++                        Thread.sleep(TimeUnit.SECONDS.toMillis(20));
++                    }
++
 +                    try {
++                        // A weird hybrid User-Agent that includes as many browsers as I could find
++                        System.setProperty("http.agent", "Mozilla/5.0 (MMCServer) Firefox/86.z0 Gecko/20100101 " +
++                                "AppleWebKit/537.36 (KHTML, like Gecko) " +
++                                "Chrome/89.0.4389.90 Safari/537.36 Edg/89.0.774.57 " +
++                                "MMCServer/" + Main.class.getPackage().getImplementationVersion());
 +                        MMCTemplateSystem.init(((String) options.valueOf("mmc-repo")), ((String) options.valueOf("mmc-template-id")));
 +                    } catch (Exception e) {
 +                        e.printStackTrace();
