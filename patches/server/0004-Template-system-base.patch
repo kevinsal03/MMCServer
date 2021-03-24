@@ -6,22 +6,18 @@ Subject: [PATCH] Template system base
 
 diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..ae6c3e921cac95f627874250971cfb65c4a52ac5
+index 0000000000000000000000000000000000000000..6707fbb2b4f6f93a7b65adb23f6d94e8ca384f58
 --- /dev/null
 +++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,103 @@
 +package me.kevsal.minecraft.mmcserver.templates;
 +
-+import me.kevsal.minecraft.mmcserver.templates.util.ZIPArchiveUtils;
++import me.kevsal.minecraft.mmcserver.util.FileDownloader;
++import me.kevsal.minecraft.mmcserver.util.ZIPArchiveUtils;
 +import org.json.simple.JSONArray;
 +import org.json.simple.JSONObject;
 +
-+import java.io.File;
-+import java.io.FileOutputStream;
-+import java.io.IOException;
 +import java.net.URL;
-+import java.nio.channels.Channels;
-+import java.nio.channels.ReadableByteChannel;
 +import java.util.HashMap;
 +import java.util.Map;
 +
@@ -97,7 +93,7 @@ index 0000000000000000000000000000000000000000..ae6c3e921cac95f627874250971cfb65
 +                try {
 +                    URL origin = new URL(MMCTemplateSystem.getInstance().getTemplateURL() + "/provided_files/" + objectData.get("origin_path"));
 +                    System.out.println("Downloading " + key + ", from: " + origin + ", to: " + objectData.get("output_path"));
-+                    downloadFile(origin, objectData.get("output_path"));
++                    FileDownloader.downloadFile(origin, objectData.get("output_path"));
 +                } catch (Exception ignored) {} // ill deal with this later
 +            }
 +        }
@@ -110,19 +106,10 @@ index 0000000000000000000000000000000000000000..ae6c3e921cac95f627874250971cfb65
 +                    String downloadPath = "mmc/work/" + key;
 +                    URL origin = new URL(MMCTemplateSystem.getInstance().getTemplateURL() + "/plugin_packs/" + objectData.get("origin_path"));
 +                    System.out.println("Downloading " + key + ", from: " + origin + ", to: " + downloadPath);
-+                    downloadFile(origin, downloadPath);
++                    FileDownloader.downloadFile(origin, downloadPath);
 +                    ZIPArchiveUtils.unzip(downloadPath, "plugins/");
 +                } catch (Exception ignored) {} // ill deal with this later
 +            }
-+        }
-+
-+
-+        public static void downloadFile(URL origin, String path) throws IOException {
-+            File file = new File(path);
-+            file.createNewFile();
-+            ReadableByteChannel rbc = Channels.newChannel(origin.openStream());
-+            FileOutputStream fos = new FileOutputStream(file);
-+            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
 +        }
 +    }
 +}
@@ -299,13 +286,37 @@ index 0000000000000000000000000000000000000000..2d66ad874fb1a9854a240af7dfb9aed4
 +    }
 +}
 \ No newline at end of file
-diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java b/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..4ce0943025cb47f5341dacf03c67636a638cd18c
+index 0000000000000000000000000000000000000000..cc8f813a999ae1c4c5d0af3161a1b5ec2668786d
 --- /dev/null
-+++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java
+@@ -0,0 +1,18 @@
++package me.kevsal.minecraft.mmcserver.util;
++
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.net.URL;
++import java.nio.channels.Channels;
++import java.nio.channels.ReadableByteChannel;
++
++public class FileDownloader {
++    public static void downloadFile(URL origin, String path) throws IOException {
++        File file = new File(path);
++        file.createNewFile();
++        ReadableByteChannel rbc = Channels.newChannel(origin.openStream());
++        FileOutputStream fos = new FileOutputStream(file);
++        fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
++    }
++}
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/util/ZIPArchiveUtils.java b/src/main/java/me/kevsal/minecraft/mmcserver/util/ZIPArchiveUtils.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..d6eba0cc28489901cc520f696a5dbb9eeda2e1da
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/util/ZIPArchiveUtils.java
 @@ -0,0 +1,57 @@
-+package me.kevsal.minecraft.mmcserver.templates.util;
++package me.kevsal.minecraft.mmcserver.util;
 +
 +import java.io.File;
 +import java.io.FileInputStream;
