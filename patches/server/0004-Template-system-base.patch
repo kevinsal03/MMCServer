@@ -6,19 +6,19 @@ Subject: [PATCH] Template system base
 
 diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9bde37b6d3
+index 0000000000000000000000000000000000000000..ae6c3e921cac95f627874250971cfb65c4a52ac5
 --- /dev/null
 +++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/MMCTemplate.java
-@@ -0,0 +1,101 @@
+@@ -0,0 +1,116 @@
 +package me.kevsal.minecraft.mmcserver.templates;
 +
++import me.kevsal.minecraft.mmcserver.templates.util.ZIPArchiveUtils;
 +import org.json.simple.JSONArray;
 +import org.json.simple.JSONObject;
 +
 +import java.io.File;
 +import java.io.FileOutputStream;
 +import java.io.IOException;
-+import java.net.MalformedURLException;
 +import java.net.URL;
 +import java.nio.channels.Channels;
 +import java.nio.channels.ReadableByteChannel;
@@ -39,7 +39,7 @@ index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9b
 +        TEMPLATE_NAME = (String) templateInfo.get("template_name");
 +        SUPPORTED_VERSION = (String) templateInfo.get("supported_version");
 +        PROVIDED_FILES = providedFileParser((JSONArray) templateInfo.get("provided_files"));
-+        PROVIDED_PLUGIN_PACKS = pluginPackParser((JSONArray) templateInfo.get("provided_plugin_packs"));
++        PROVIDED_PLUGIN_PACKS = providedPluginPackParser((JSONArray) templateInfo.get("provided_plugin_packs"));
 +        PROVIDED_WORLD_PACKS = null;
 +        REMOTE_PLUGIN_JARS = null;
 +        REMOTE_WORLD_PACKS = null;
@@ -57,6 +57,7 @@ index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9b
 +
 +    public boolean installTemplate() {
 +        InstallTasks.installProvidedFiles(PROVIDED_FILES);
++        InstallTasks.installProvidedPluginPacks(PROVIDED_PLUGIN_PACKS);
 +        return false;
 +    }
 +
@@ -74,14 +75,14 @@ index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9b
 +        return out;
 +    }
 +
-+    private HashMap<String, HashMap<String, String>> pluginPackParser(JSONArray jsonArray) {
++    private HashMap<String, HashMap<String, String>> providedPluginPackParser(JSONArray jsonArray) {
 +        HashMap<String, HashMap<String, String>> out = new HashMap<>();
 +
 +        for (Object providedFile : jsonArray) {
 +            HashMap<String, String> objectData = new HashMap<>();
 +            String key = ((String) ((JSONObject) providedFile).get("pack_name"));
 +            objectData.put("origin_path", ((String) ((JSONObject) providedFile).get("origin_path")));
-+            objectData.put("output_path", ((String) ((JSONObject) providedFile).get("output_path")));
++            // in future add checksum
 +            out.put(key, objectData);
 +        }
 +
@@ -97,6 +98,20 @@ index 0000000000000000000000000000000000000000..c95ad9aec22d58955cb3582da3cb1a9b
 +                    URL origin = new URL(MMCTemplateSystem.getInstance().getTemplateURL() + "/provided_files/" + objectData.get("origin_path"));
 +                    System.out.println("Downloading " + key + ", from: " + origin + ", to: " + objectData.get("output_path"));
 +                    downloadFile(origin, objectData.get("output_path"));
++                } catch (Exception ignored) {} // ill deal with this later
++            }
++        }
++
++        public static void installProvidedPluginPacks(HashMap<String, HashMap<String, String>> providedPluginPacks) {
++            for (Map.Entry<String, HashMap<String, String>> entry : providedPluginPacks.entrySet()) {
++                String key = entry.getKey();
++                HashMap<String, String> objectData = entry.getValue();
++                try {
++                    String downloadPath = "mmc/work/" + key;
++                    URL origin = new URL(MMCTemplateSystem.getInstance().getTemplateURL() + "/plugin_packs/" + objectData.get("origin_path"));
++                    System.out.println("Downloading " + key + ", from: " + origin + ", to: " + downloadPath);
++                    downloadFile(origin, downloadPath);
++                    ZIPArchiveUtils.unzip(downloadPath, "plugins/");
 +                } catch (Exception ignored) {} // ill deal with this later
 +            }
 +        }
@@ -284,6 +299,69 @@ index 0000000000000000000000000000000000000000..2d66ad874fb1a9854a240af7dfb9aed4
 +    }
 +}
 \ No newline at end of file
+diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ce0943025cb47f5341dacf03c67636a638cd18c
+--- /dev/null
++++ b/src/main/java/me/kevsal/minecraft/mmcserver/templates/util/ZIPArchiveUtils.java
+@@ -0,0 +1,57 @@
++package me.kevsal.minecraft.mmcserver.templates.util;
++
++import java.io.File;
++import java.io.FileInputStream;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.util.zip.ZipEntry;
++import java.util.zip.ZipInputStream;
++
++public class ZIPArchiveUtils {
++
++    // Based on code from https://www.journaldev.com/960/java-unzip-file-example
++    public static void unzip(String zipFilePath, String destDir) {
++        File dir = new File(destDir);
++        // create output directory if it doesn't exist
++        if(!dir.exists()) dir.mkdirs();
++        FileInputStream fis;
++        //buffer for read and write data to file
++        byte[] buffer = new byte[1024];
++        try {
++            fis = new FileInputStream(zipFilePath);
++            ZipInputStream zis = new ZipInputStream(fis);
++            ZipEntry ze = zis.getNextEntry();
++            while(ze != null){
++                if (ze.isDirectory()) {
++                    String dirName = ze.getName();
++                    File newDir = new File(destDir + File.separator + dirName);
++                    System.out.println("Creating directory " + newDir.getAbsolutePath());
++                    newDir.mkdirs();
++                } else {
++                    String fileName = ze.getName();
++                    File newFile = new File(destDir + File.separator + fileName);
++                    System.out.println("Unzipping to "+newFile.getAbsolutePath());
++                    //create directories for sub directories in zip
++                    new File(newFile.getParent()).mkdirs();
++                    FileOutputStream fos = new FileOutputStream(newFile);
++                    int len;
++                    while ((len = zis.read(buffer)) > 0) {
++                        fos.write(buffer, 0, len);
++                    }
++                    fos.close();
++                }
++                //close this ZipEntry
++                zis.closeEntry();
++                ze = zis.getNextEntry();
++            }
++            //close last ZipEntry
++            zis.closeEntry();
++            zis.close();
++            fis.close();
++        } catch (IOException e) {
++            e.printStackTrace();
++        }
++
++    }
++
++}
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
 index 2774abda3dd1390ae904bf2b177bdd0f11968f40..ff730d02770d07b6a3d271f554100bc0eca24de4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
