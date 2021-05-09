@@ -288,7 +288,7 @@ index 0000000000000000000000000000000000000000..2d66ad874fb1a9854a240af7dfb9aed4
 \ No newline at end of file
 diff --git a/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java b/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..cc8f813a999ae1c4c5d0af3161a1b5ec2668786d
+index 0000000000000000000000000000000000000000..d6169d0f52a03ec7f06515b9bff78b1e92e9ba71
 --- /dev/null
 +++ b/src/main/java/me/kevsal/minecraft/mmcserver/util/FileDownloader.java
 @@ -0,0 +1,18 @@
@@ -374,7 +374,7 @@ index 0000000000000000000000000000000000000000..d6eba0cc28489901cc520f696a5dbb9e
 +
 +}
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 2774abda3dd1390ae904bf2b177bdd0f11968f40..ff730d02770d07b6a3d271f554100bc0eca24de4 100644
+index 145748b5ca095cd555fd1f085a596bf0f58fea13..2549f439ad2bc6088150efb62975d44a3135eef4 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
 @@ -2,6 +2,7 @@ package org.bukkit.craftbukkit;
@@ -432,7 +432,7 @@ index 2774abda3dd1390ae904bf2b177bdd0f11968f40..ff730d02770d07b6a3d271f554100bc0
              }
          };
  
-@@ -281,6 +305,42 @@ public class Main {
+@@ -280,6 +304,42 @@ public class Main {
                  }
                  // Paper end
                  System.setProperty( "library.jansi.version", "Paper" ); // Paper - set meaningless jansi version to prevent git builds from crashing on Windows
